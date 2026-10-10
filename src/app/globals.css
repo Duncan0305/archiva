@@ -1,0 +1,223 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --background: #fafbf8;
+  --foreground: #263c32;
+  --card: #ffffff;
+  --card-foreground: #263c32;
+  --popover: #ffffff;
+  --popover-foreground: #263c32;
+  --primary: #285d47;
+  --primary-foreground: #ffffff;
+  --secondary: #edf2e9;
+  --secondary-foreground: #36573d;
+  --muted: #f0f2ed;
+  --muted-foreground: #5e685f;
+  --accent: #e8eee2;
+  --accent-foreground: #285d47;
+  --destructive: #b74436;
+  --border: #e1e6dd;
+  --input: #d9dfd5;
+  --ring: #4f7961;
+  --radius: 0.75rem;
+  --hero: #eff2e8;
+  --pdf: #45624b;
+  --pdf-bg: #edf3e8;
+  --image: #956d30;
+  --image-bg: #faf1df;
+  --archive: #956351;
+  --archive-bg: #f8ece4;
+  --duration-fast: 160ms;
+  --duration-normal: 260ms;
+  --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.dark {
+  --background: #151d19;
+  --foreground: #e4eae0;
+  --card: #1c2720;
+  --card-foreground: #e4eae0;
+  --popover: #202c24;
+  --popover-foreground: #e4eae0;
+  --primary: #b8d2a5;
+  --primary-foreground: #1e3727;
+  --secondary: #2a382b;
+  --secondary-foreground: #d2dec8;
+  --muted: #253027;
+  --muted-foreground: #a2afa3;
+  --accent: #334331;
+  --accent-foreground: #d2e5c4;
+  --destructive: #f39c8d;
+  --border: #334136;
+  --input: #425144;
+  --ring: #b8d2a5;
+  --hero: #222e23;
+  --pdf: #bed0a7;
+  --pdf-bg: #2d3c2b;
+  --image: #ddc38d;
+  --image-bg: #3b3526;
+  --archive: #e0ad95;
+  --archive-bg: #3e3029;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-hero: var(--hero);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --font-sans: var(--font-body), "Segoe UI", sans-serif;
+  --font-display: var(--font-heading), "Segoe UI", sans-serif;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 6rem;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+  body,
+  header,
+  footer,
+  .bg-hero,
+  .bg-card {
+    transition:
+      background-color var(--duration-fast),
+      color var(--duration-fast);
+  }
+  button,
+  a,
+  input {
+    -webkit-tap-highlight-color: transparent;
+  }
+  button:not(:disabled),
+  a {
+    touch-action: manipulation;
+  }
+  button:not(:disabled) {
+    cursor: pointer;
+  }
+  a,
+  button,
+  input {
+    outline-offset: 5px;
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+  }
+  ::selection {
+    background: var(--primary);
+    color: var(--primary-foreground);
+  }
+}
+
+@layer components {
+  .page-container {
+    @apply mx-auto w-full max-w-[1248px] px-5 sm:px-8 lg:px-12;
+  }
+  .eyebrow {
+    @apply text-[10px] font-semibold tracking-[0.19em] uppercase;
+  }
+  .tool-icon[data-category="pdf"] {
+    color: var(--pdf);
+    background: var(--pdf-bg);
+  }
+  .tool-icon[data-category="images"] {
+    color: var(--image);
+    background: var(--image-bg);
+  }
+  .tool-icon[data-category="files"] {
+    color: var(--archive);
+    background: var(--archive-bg);
+  }
+  .tool-card {
+    animation: card-appear 220ms var(--ease-out);
+    transition:
+      transform var(--duration-fast) var(--ease-out),
+      border-color var(--duration-fast),
+      box-shadow var(--duration-fast),
+      background-color var(--duration-normal);
+  }
+  .tool-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--ring);
+    box-shadow: 0 9px 22px -15px #263c3240;
+  }
+  .hero-grid {
+    background-image: radial-gradient(var(--border) 1px, transparent 1px);
+    background-size: 18px 18px;
+  }
+  .file-paper {
+    border: 1px solid #d9dfcf;
+    background: #fffef9;
+    box-shadow: 0 12px 25px -15px #344a3640;
+  }
+  .enter {
+    animation: enter 380ms var(--ease-out) both;
+  }
+  .skip-link {
+    @apply fixed top-3 left-3 z-50 -translate-y-24 rounded-lg bg-primary px-4 py-3 text-primary-foreground focus:translate-y-0;
+  }
+}
+
+@keyframes enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes card-appear {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .tool-card:hover {
+    transform: none;
+  }
+}
