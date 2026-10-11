@@ -55,6 +55,9 @@ export function Explorer({ category }: { category: Filter }) {
     { id: "all" as const, name: "Todas las herramientas", icon: LayoutGrid },
     ...categories,
   ];
+  const availableCount = filtered.filter(
+    (tool) => tool.status === "available",
+  ).length;
 
   function selectCategory(id: Filter) {
     router.replace(
@@ -142,7 +145,7 @@ export function Explorer({ category }: { category: Filter }) {
                 href="#herramientas"
                 className="mt-4 inline-flex items-center gap-2.5 rounded-sm text-[11px] font-semibold text-primary"
               >
-                Explora lo que viene <ArrowDown className="size-3.5" />
+                Explora las herramientas <ArrowDown className="size-3.5" />
               </a>
             </div>
             <div className="hidden lg:block">
@@ -156,7 +159,7 @@ export function Explorer({ category }: { category: Filter }) {
             </span>
             <span className="flex items-center gap-2 text-muted-foreground">
               <span className="size-1.5 rounded-full bg-primary" />
-              Vista previa · Herramientas en desarrollo
+              Unir PDF ya está disponible
             </span>
           </div>
         </div>
@@ -240,7 +243,12 @@ export function Explorer({ category }: { category: Filter }) {
                 {filtered.length === 1 ? "herramienta" : "herramientas"}
                 {query.trim() ? ` para “${query.trim()}”` : " para explorar"}
               </p>
-              <span>Todas en desarrollo</span>
+              <span>
+                {availableCount}{" "}
+                {availableCount === 1 ? "disponible" : "disponibles"} ·{" "}
+                {filtered.filter((tool) => tool.status === "planned").length}{" "}
+                próximamente
+              </span>
             </div>
             <div
               id="catalog-results"
@@ -287,8 +295,8 @@ export function Explorer({ category }: { category: Filter }) {
             </div>
             <p className="mt-6 flex items-start gap-2 text-[10px] leading-5 text-muted-foreground">
               <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary/60" />
-              Puedes explorar cada herramienta y conocer su propósito. El
-              procesamiento de archivos estará disponible en una próxima fase.
+              Unir PDF ya funciona en tu navegador. Las herramientas marcadas
+              como «Próximamente» siguen en desarrollo.
             </p>
           </div>
         </div>

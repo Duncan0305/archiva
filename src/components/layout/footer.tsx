@@ -35,7 +35,7 @@ export function Footer() {
           © {new Date().getFullYear()} Archiva. Hecho para simplificar.
         </span>
         <span>
-          {site.phase} <span className="mx-2">/</span> Herramientas en
+          {site.phase} <span className="mx-2">/</span> Más herramientas en
           desarrollo
         </span>
       </div>

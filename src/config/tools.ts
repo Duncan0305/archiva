@@ -24,7 +24,7 @@ export const categories: Category[] = [
   { id: "files", name: "Archivos", icon: Archive },
 ];
 
-// Availability belongs to each tool; no processing implementation is loaded in phase 1.
+// The catalog contains metadata only; PDF processing loads on file selection.
 export const tools: Tool[] = [
   {
     slug: "merge-pdf",
@@ -33,7 +33,7 @@ export const tools: Tool[] = [
       "Todos tus documentos, en un solo PDF. En el orden que tú elijas.",
     icon: Combine,
     category: "pdf",
-    status: "planned",
+    status: "available",
     inputLabel: "Archivos PDF",
     outputLabel: "Un documento PDF",
   },

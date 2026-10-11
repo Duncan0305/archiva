@@ -85,7 +85,7 @@ export function Header() {
         <div className="flex items-center gap-3">
           <span className="hidden items-center gap-2 text-[11px] text-muted-foreground lg:flex">
             <span className="size-1.5 rounded-full bg-primary" />
-            En construcción
+            Unir PDF disponible
           </span>
           <ThemeToggle />
           <Button

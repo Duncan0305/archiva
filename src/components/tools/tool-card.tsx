@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { categories } from "@/config/tools";
 import type { Tool } from "@/types/tool";
+import { cn } from "@/lib/utils";
 
 export function ToolCard({ tool }: { tool: Tool }) {
   const Icon = tool.icon;
@@ -33,7 +34,14 @@ export function ToolCard({ tool }: { tool: Tool }) {
         <span className="font-medium text-muted-foreground">
           {categories.find((category) => category.id === tool.category)?.name}
         </span>
-        <span className="rounded-full bg-muted px-2 py-1 text-muted-foreground">
+        <span
+          className={cn(
+            "rounded-full px-2 py-1",
+            tool.status === "available"
+              ? "bg-secondary font-medium text-primary"
+              : "bg-muted text-muted-foreground",
+          )}
+        >
           {tool.status === "planned" ? "Próximamente" : "Disponible"}
         </span>
       </div>

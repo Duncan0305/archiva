@@ -49,7 +49,7 @@ test("menú de categorías con teclado y navegación de herramienta", async ({
   await expect(page.locator("#catalog-results .tool-card")).toHaveCount(10);
   await page
     .getByRole("link", {
-      name: "Unir PDF — en desarrollo, ver detalles",
+      name: "Unir PDF — ver herramienta",
       exact: true,
     })
     .click();
@@ -81,6 +81,15 @@ test("las 16 rutas exportadas son honestas y no suben archivos", async ({
   for (const path of paths) {
     const response = await page.goto(path);
     expect(response?.status(), path).toBe(200);
+    if (path === "/tools/merge-pdf/") {
+      await expect(
+        page.getByRole("button", { name: "Seleccionar archivos" }),
+      ).toBeEnabled();
+      await expect(
+        page.getByRole("button", { name: "Unir PDF", exact: true }),
+      ).toBeDisabled();
+      continue;
+    }
     await expect(
       page.getByText("Estamos preparando esta herramienta"),
     ).toBeVisible();
