@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getTool, tools } from "@/config/tools";
 import { ToolWorkspace } from "@/components/tools/tool-workspace";
 import { MergePdfTool } from "@/components/tools/merge-pdf/merge-pdf-tool";
+import { SplitPdfTool } from "@/components/tools/split-pdf/split-pdf-tool";
 
 export const dynamicParams = false;
 
@@ -21,7 +22,7 @@ export async function generateMetadata({
       ? `${tool.name} — ${tool.status === "available" ? "Local y privado" : "En desarrollo"}`
       : "Herramienta no encontrada",
     description: tool
-      ? `${tool.description} ${tool.status === "available" ? "Combina tus PDF en tu dispositivo, sin subir documentos a un servidor." : "Herramienta planificada, todavía no disponible."}`
+      ? `${tool.description} ${tool.status === "available" ? "Procesa PDF en tu dispositivo, sin subir documentos a un servidor." : "Herramienta planificada, todavía no disponible."}`
       : undefined,
   };
 }
@@ -35,7 +36,11 @@ export default async function ToolPage({
   if (!tool) notFound();
   return (
     <ToolWorkspace tool={tool}>
-      {tool.slug === "merge-pdf" ? <MergePdfTool /> : undefined}
+      {tool.slug === "merge-pdf" ? (
+        <MergePdfTool />
+      ) : tool.slug === "split-pdf" ? (
+        <SplitPdfTool />
+      ) : undefined}
     </ToolWorkspace>
   );
 }

@@ -15,6 +15,8 @@ const messages: Record<PdfErrorCode, string> = {
     "El procesamiento local se interrumpió. Vuelve a seleccionar los documentos; si son grandes, prueba con menos archivos.",
   merge:
     "No pudimos combinar estos documentos. Alguno puede contener elementos incompatibles. Prueba con otra selección.",
+  split:
+    "No pudimos dividir este documento. Puede contener elementos incompatibles. Prueba con otro PDF.",
   cancelled: "La operación se ha cancelado.",
 };
 

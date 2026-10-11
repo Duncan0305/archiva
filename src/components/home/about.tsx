@@ -29,8 +29,8 @@ export function About() {
             <HardDrive className="mb-4 size-5 text-primary" strokeWidth={1.5} />
             <h3 className="text-[12px] font-semibold">En tu dispositivo</h3>
             <p className="mt-2 text-[11px] leading-6 text-muted-foreground">
-              Unir PDF procesa tus documentos localmente, desde el navegador,
-              sin subirlos a un servidor.
+              Unir y Dividir PDF procesan tus documentos localmente, desde el
+              navegador, sin subirlos a un servidor.
             </p>
           </div>
           <div>

@@ -1,6 +1,6 @@
 # Archiva
 
-Archiva reúne herramientas para gestionar, organizar y transformar archivos directamente desde el navegador. **Unir PDF está disponible:** combina documentos localmente, respeta el orden elegido y permite descargar el resultado. Las otras 15 herramientas permanecen identificadas como «Próximamente».
+Archiva reúne herramientas para gestionar, organizar y transformar archivos directamente desde el navegador. **Unir PDF y Dividir PDF están disponibles:** combinan o extraen páginas localmente, respetan el orden indicado y permiten descargar resultados. Las otras 14 herramientas permanecen identificadas como «Próximamente».
 
 Los documentos se procesan en memoria en el dispositivo del usuario. No hay backend, subidas de documentos, cuentas ni servicios externos de conversión.
 
@@ -16,6 +16,8 @@ npm run dev
 Abrir [http://127.0.0.1:3000](http://127.0.0.1:3000).
 
 Para probar Unir PDF, abrir [http://127.0.0.1:3000/tools/merge-pdf/](http://127.0.0.1:3000/tools/merge-pdf/), seleccionar dos PDF, ajustar su orden y pulsar **Unir PDF**. Después se puede cambiar el nombre y descargar el resultado.
+
+Para probar Dividir PDF, abrir [http://127.0.0.1:3000/tools/split-pdf/](http://127.0.0.1:3000/tools/split-pdf/), seleccionar un PDF, examinar las miniaturas numeradas y elegir páginas, rangos o bloques de N páginas. Los resultados se descargan individualmente; si hay varios, se puede preparar un ZIP local.
 
 Para detener el servidor, pulsar `Ctrl + C` en su terminal. Si el proyecto ya está ejecutándose, utilizar la dirección del servidor existente en lugar de iniciar una segunda instancia.
 
@@ -45,6 +47,9 @@ La configuración sigue la [exportación estática de Next.js](https://nextjs.or
 - Reordenación mediante arrastre en escritorio, flechas disponibles en todos los dispositivos y control del asa con las flechas del teclado.
 - Estados de selección, validación, combinación, error y resultado, con progreso por documentos realmente revisados/copiados y etapa de generación sin porcentaje inventado.
 - Descarga local con nombre editable, tamaño y número de páginas; nueva combinación, cancelación y limpieza de recursos.
+- Dividir PDF con miniaturas visibles de todas las páginas, renderizadas progresivamente, y selección mediante clic, toque o teclado.
+- Extracción de páginas no consecutivas, división por rangos en el orden escrito y bloques de N páginas; vista previa de los grupos antes de procesar.
+- Descarga individual de resultados, nombre editable para un único PDF y ZIP local bajo demanda para varios archivos.
 - Transiciones CSS breves, reposicionamiento de tarjetas con Motion y respeto a `prefers-reduced-motion`.
 - Metadatos por herramienta, favicon propio, tipografías servidas desde el mismo sitio y página 404.
 
@@ -64,16 +69,14 @@ src/
 │   ├── layout/                 # Header y footer
 │   ├── shared/                 # Logo, tema y proveedores
 │   ├── tools/                  # Tarjeta y plantilla reutilizable
-│   │   └── merge-pdf/
-│   │       ├── merge-pdf-tool.tsx
-│   │       ├── pdf-dropzone.tsx
-│   │       ├── pdf-file-list.tsx
-│   │       └── merge-result.tsx
+│   │   ├── merge-pdf/          # Carga, lista, carátulas y resultado
+│   │   └── split-pdf/          # Carga, modos, cuadrícula y resultados
 │   └── ui/                     # Componentes shadcn/ui
 ├── config/
 │   ├── site.ts                 # Identidad y navegación
 │   └── tools.ts                # Herramientas, categorías y disponibilidad
 ├── hooks/use-merge-pdf.ts       # Estado, bloqueo de operaciones y limpieza
+├── hooks/use-split-pdf.ts       # Estado de división y limpieza
 ├── lib/
 │   ├── utils.ts
 │   └── pdf/
@@ -81,17 +84,25 @@ src/
 │       ├── validate-pdf.ts     # Lectura real y rechazo de incompatibles
 │       ├── render-cover.ts     # Carátula de la primera página con PDF.js
 │       ├── merge-pdf.ts        # Copia de páginas y generación del PDF
+│       ├── split-pdf.ts        # Extracción de grupos de páginas
+│       ├── parse-page-ranges.ts # Rangos y bloques de N páginas
+│       ├── page-preview-session.ts # Renderizado progresivo con PDF.js
+│       ├── split.worker.ts     # División en worker local
+│       ├── split-worker-client.ts # Comunicación con el worker
 │       ├── pdf.worker.ts       # Documentos retenidos solo en memoria
 │       ├── worker-client.ts    # Mensajes, progreso y terminación
 │       ├── errors.ts           # Mensajes seguros y comprensibles
 │       └── download.ts         # Nombre descargable y tamaños
 └── types/
     ├── tool.ts
-    └── pdf.ts
+    ├── pdf.ts
+    └── split-pdf.ts
 tests/
 ├── frontend.spec.ts            # Catálogo, navegación y accesibilidad
 ├── pdf-logic.spec.ts           # Pruebas de validación y combinación
 ├── merge-pdf.spec.ts           # Flujos reales en el navegador
+├── split-logic.spec.ts         # Rangos y resultados PDF
+├── split-pdf.spec.ts           # Flujos de división y ZIP en navegador
 ├── helpers/pdf-fixtures.ts     # Documentos de prueba generados en memoria
 └── fixtures/                  # Ejemplos cifrados con atribución MIT
 playwright.config.ts
@@ -99,7 +110,7 @@ components.json                 # Configuración de shadcn/ui
 next.config.ts
 ```
 
-Se conserva una sola ruta dinámica `/tools/[slug]/`; no hay rutas duplicadas para Unir PDF. La plantilla admite un espacio de trabajo específico por herramienta sin acoplar las demás a la lógica de PDF.
+Se conserva una sola ruta dinámica `/tools/[slug]/`; cada herramienta tiene su propio espacio de trabajo sin acoplar las demás a su lógica.
 
 ## Dependencias
 
@@ -118,8 +129,9 @@ Se conserva una sola ruta dinámica `/tools/[slug]/`; no hay rutas duplicadas pa
 | Vista previa estática | `serve`, solo desarrollo                                                    |
 | Unión local de PDF    | `pdf-lib` 1.17.1, cargado en un Web Worker nativo                           |
 | Carátulas de PDF      | `pdfjs-dist` 6.4.299, cargado al seleccionar archivos                       |
+| Descarga ZIP          | `jszip` 3.10.2, cargado solo al preparar varios resultados                  |
 
-Las versiones exactas están registradas en `package-lock.json`. Se añadieron `pdf-lib` para unir y PDF.js para las carátulas. Se utiliza el entorno de pruebas ya existente, sin añadir otra biblioteca de tests ni de arrastre. No hay autenticación, bases de datos ni backend.
+Las versiones exactas están registradas en `package-lock.json`. Dividir PDF reutiliza `pdf-lib` y PDF.js; en esta fase solo se añade `jszip` para la descarga conjunta. Se utiliza el entorno de pruebas ya existente. No hay autenticación, bases de datos ni backend.
 
 ## Funcionamiento y privacidad de Unir PDF
 
@@ -132,12 +144,21 @@ Las versiones exactas están registradas en `package-lock.json`. Se añadieron `
 
 No se guardan archivos en `localStorage`, `sessionStorage`, IndexedDB, cookies ni servidores. El único uso de `localStorage` de la aplicación sigue siendo la preferencia de tema. Los motores de unión y carátulas se descargan como código estático del propio sitio al seleccionar el primer PDF. Una vez cargados, la operación funciona sin conexión, mientras la página permanezca abierta.
 
+## Funcionamiento y privacidad de Dividir PDF
+
+Un único archivo se lee y valida localmente. `pdf-lib` conserva el documento original en un worker; PDF.js recibe una copia temporal para mostrar las páginas. La cuadrícula contiene todas las páginas numeradas, pero solo renderiza miniaturas al acercarse a la zona visible. La selección puede hacerse con ratón, toque o teclado.
+
+El modo **Elegir páginas** extrae las páginas marcadas en orden original. **Por rangos** genera un PDF por grupo en el orden escrito; acepta, por ejemplo, `5-7, 1-2`. **Cada N páginas** crea bloques consecutivos, incluido uno final más corto. La configuración se valida antes de habilitar la división. Cada PDF se genera en el worker con progreso por documento terminado, sin convertir las páginas en imágenes.
+
+Los resultados se entregan como `Blob` y URLs temporales. Con varios archivos, `jszip` se carga solo si se pulsa **Preparar descarga ZIP** y construye el ZIP en memoria, sin solicitudes externas. Las URLs y los workers se liberan al reiniciar, reemplazar el documento o abandonar la herramienta. Los archivos originales y generados no se guardan de forma persistente.
+
 ## Limitaciones conocidas
 
 - Los PDF cifrados o protegidos se rechazan; no se solicitan contraseñas ni se elude su protección.
 - Se preservan las páginas, dimensiones, recortes y orientación en la medida admitida por `pdf-lib`. Las firmas digitales no se mantienen válidas en el nuevo documento; formularios interactivos, marcadores, adjuntos y otros datos a nivel de documento pueden no conservarse.
 - La validación comprueba estructura y compatibilidad con el motor; no es un renderizador ni una certificación completa del formato PDF. Una página con contenido internamente corrupto podría requerir revisión visual del resultado.
 - No hay un límite artificial de archivos o megabytes. El máximo práctico depende de la memoria disponible y de la complejidad de los documentos. Crear una carátula necesita una copia temporal del archivo; se procesa una a la vez. Se muestran errores de asignación de memoria detectables; si el sistema cierra la pestaña por falta de memoria, JavaScript no puede recuperar esa sesión.
+- Dividir PDF también utiliza una copia temporal para PDF.js. Las miniaturas tienen resolución acotada; la vista sirve para identificar páginas, no para examinar detalles de impresión. El ZIP necesita memoria adicional proporcional a los resultados generados.
 - Al salir, recargar o reiniciar se pierde la selección y el resultado que no se haya descargado. No existe persistencia de documentos.
 
 ## Validaciones
@@ -154,7 +175,7 @@ Las pruebas utilizan **la exportación real de `out/`** en un servidor estático
 
 - Búsqueda, categorías, enlaces directos, recarga y estado vacío.
 - Navegación de escritorio, teclado y menú móvil.
-- Las 16 páginas y disponibilidad exclusiva de Unir PDF; las otras 15 mantienen la carga deshabilitada.
+- Las 16 páginas y disponibilidad exclusiva de Unir PDF y Dividir PDF; las otras 14 mantienen la carga deshabilitada.
 - Ausencia de solicitudes de escritura o solicitudes a otros dominios durante el recorrido de las herramientas.
 - Persistencia de tema y preferencia del sistema.
 - Ausencia de desbordamiento horizontal a 320, 390, 768, 1024, 1440 y 1920 px.
@@ -168,8 +189,9 @@ Las pruebas utilizan **la exportación real de `out/`** en un servidor estático
 - Vista móvil y accesibilidad de la selección y del resultado en modo oscuro; cancelación de una lectura pendiente sin resucitar archivos.
 - Renderizado real de carátulas distintas, ampliación, asociación correcta tras reordenar y limpieza de sus URLs.
 - Recuperación tras un fallo de asignación de memoria al crear la descarga, con una nueva selección y combinación correctas.
+- Dividir PDF: miniaturas visibles, selección individual/todas/ninguna, reemplazo, páginas no consecutivas, rangos en orden, bloques con resto, validaciones, descarga individual, ZIP, móvil y privacidad sin red.
 
-Validación de esta entrega: **24 pruebas superadas**, TypeScript y lint sin errores, compilación y exportación estática correctas. También se comprobó la selección y unión real en el servidor de desarrollo.
+Validación de la fase 3: TypeScript, lint, compilación y exportación estática correctas. **36 pruebas pasan** sobre el sitio exportado; incluyen ambos flujos, cancelación y limpieza de recursos.
 
 Las capturas de revisión se generan en `test-results/` (ignorado por Git). Las comprobaciones de accesibilidad automatizadas no sustituyen una auditoría manual completa ni pruebas con todos los navegadores.
 
@@ -181,4 +203,4 @@ Se fija una versión corregida de `compression` (>= 1.8.2) mediante `overrides` 
 
 ## Próximas herramientas
 
-Unir PDF es la única herramienta habilitada. Las otras 15 se implementarán individualmente cuando se acuerde su alcance, incorporando sus motores bajo demanda y verificando su procesamiento local. Las conversiones Word/PowerPoint requieren evaluar fidelidad y compatibilidad antes de anunciar su disponibilidad.
+Unir PDF y Dividir PDF están habilitadas. Las otras 14 herramientas se implementarán individualmente cuando se acuerde su alcance, incorporando sus motores bajo demanda y verificando su procesamiento local. Las conversiones Word/PowerPoint requieren evaluar fidelidad y compatibilidad antes de anunciar su disponibilidad.

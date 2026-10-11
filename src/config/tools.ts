@@ -43,7 +43,7 @@ export const tools: Tool[] = [
     description: "Separa tu documento y quédate con las páginas que necesitas.",
     icon: Scissors,
     category: "pdf",
-    status: "planned",
+    status: "available",
     inputLabel: "Un archivo PDF",
     outputLabel: "Documentos PDF separados",
   },

@@ -19,6 +19,7 @@ export type PdfErrorCode =
   | "minimum"
   | "worker"
   | "merge"
+  | "split"
   | "cancelled";
 
 export interface PdfIssue {
