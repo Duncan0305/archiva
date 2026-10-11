@@ -1,6 +1,7 @@
 node_modules/
 .next/
 out/
+public/wasm/qpdf.wasm
 dist/
 *.tsbuildinfo
 next-env.d.ts

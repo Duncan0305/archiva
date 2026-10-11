@@ -7,6 +7,7 @@ import { SplitPdfTool } from "@/components/tools/split-pdf/split-pdf-tool";
 import { OrganizePdfTool } from "@/components/tools/organize-pdf/organize-pdf-tool";
 import { ImagesToPdfTool } from "@/components/tools/images-to-pdf/images-to-pdf-tool";
 import { PdfToImagesTool } from "@/components/tools/pdf-to-images/pdf-to-images-tool";
+import { CompressPdfTool } from "@/components/tools/compress-pdf/compress-pdf-tool";
 
 export const dynamicParams = false;
 
@@ -41,6 +42,8 @@ export default async function ToolPage({
     <ToolWorkspace tool={tool}>
       {tool.slug === "merge-pdf" ? (
         <MergePdfTool />
+      ) : tool.slug === "compress-pdf" ? (
+        <CompressPdfTool />
       ) : tool.slug === "split-pdf" ? (
         <SplitPdfTool />
       ) : tool.slug === "organize-pdf" ? (

@@ -23,6 +23,8 @@ const messages: Record<PdfErrorCode, string> = {
     "No pudimos crear el PDF con estas imágenes. Prueba con archivos más pequeños o vuelve a seleccionarlos.",
   render:
     "No pudimos convertir las páginas en imágenes. Reduce la resolución o prueba con otra copia del PDF.",
+  compress:
+    "No pudimos optimizar este PDF de forma segura. Puede contener elementos incompatibles con el motor local.",
   cancelled: "La operación se ha cancelado.",
 };
 

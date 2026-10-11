@@ -23,6 +23,7 @@ export type PdfErrorCode =
   | "organize"
   | "images"
   | "render"
+  | "compress"
   | "cancelled";
 
 export interface PdfIssue {

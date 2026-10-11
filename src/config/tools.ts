@@ -54,7 +54,7 @@ export const tools: Tool[] = [
       "Menos peso para tus documentos, más espacio para lo importante.",
     icon: Minimize2,
     category: "pdf",
-    status: "planned",
+    status: "available",
     inputLabel: "Un archivo PDF",
     outputLabel: "Un PDF de menor tamaño",
   },

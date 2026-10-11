@@ -1,6 +1,6 @@
 # Archiva
 
-Archiva reúne herramientas para gestionar, organizar y transformar archivos directamente desde el navegador. **Unir, Dividir, Organizar, Imágenes a PDF y PDF a imágenes están disponibles:** combinan documentos, extraen páginas, reorganizan PDF y convierten entre PDF e imágenes. Las otras 11 herramientas permanecen identificadas como «Próximamente».
+Archiva reúne herramientas para gestionar, organizar y transformar archivos directamente desde el navegador. **Unir, Dividir, Comprimir, Organizar, Imágenes a PDF y PDF a imágenes están disponibles:** combinan documentos, extraen páginas, reducen su tamaño, reorganizan PDF y convierten entre PDF e imágenes. Las otras 10 herramientas permanecen identificadas como «Próximamente».
 
 Los documentos se procesan en memoria en el dispositivo del usuario. No hay backend, subidas de documentos, cuentas ni servicios externos de conversión.
 
@@ -24,6 +24,8 @@ Para probar Organizar PDF, abrir [http://127.0.0.1:3000/tools/organize-pdf/](htt
 Para probar Imágenes a PDF, abrir [http://127.0.0.1:3000/tools/images-to-pdf/](http://127.0.0.1:3000/tools/images-to-pdf/), seleccionar archivos JPG, PNG o WebP, ordenarlos, ajustar la página y pulsar **Crear PDF**.
 
 Para probar PDF a imágenes, abrir [http://127.0.0.1:3000/tools/pdf-to-images/](http://127.0.0.1:3000/tools/pdf-to-images/), seleccionar un PDF, elegir sus páginas, el formato y la resolución, y pulsar **Convertir**. Las imágenes pueden descargarse individualmente o en un ZIP.
+
+Para probar Comprimir PDF, abrir [http://127.0.0.1:3000/tools/compress-pdf/](http://127.0.0.1:3000/tools/compress-pdf/), seleccionar un PDF, elegir un nivel y pulsar **Comprimir PDF**. Archiva compara los tamaños reales y solo ofrece el resultado cuando ocupa menos que el original.
 
 Para detener el servidor, pulsar `Ctrl + C` en su terminal. Si el proyecto ya está ejecutándose, utilizar la dirección del servidor existente en lugar de iniciar una segunda instancia.
 
@@ -67,6 +69,9 @@ La configuración sigue la [exportación estática de Next.js](https://nextjs.or
 - PDF a imágenes con miniaturas progresivas, selección individual, masiva o por rangos normalizados y vista previa de una página elegida.
 - Exportación real a JPG, PNG o WebP mediante PDF.js y Canvas, con 96, 150, 300 o DPI personalizado, calidad, fondo y transparencia cuando el contenido lo permite.
 - Procesamiento secuencial con progreso por página, cancelación, límites de Canvas, descarga individual y ZIP local con los números de página originales.
+- Comprimir PDF con validación y análisis reales, carátula del documento, tres niveles explicados y ejecución de QPDF WebAssembly en un worker local.
+- Optimización estructural, recompresión de flujos e imágenes compatibles según el nivel, sin rasterizar todas las páginas ni convertir su texto en una imagen.
+- Comparación de tamaño real, validación del resultado, aviso honesto cuando no existe reducción, cancelación, descarga renombrable y limpieza de recursos.
 - Transiciones CSS breves, reposicionamiento de tarjetas con Motion y respeto a `prefers-reduced-motion`.
 - Metadatos por herramienta, favicon propio, tipografías servidas desde el mismo sitio y página 404.
 
@@ -90,7 +95,8 @@ src/
 │   │   ├── split-pdf/          # Carga, modos, cuadrícula y resultados
 │   │   ├── organize-pdf/       # Arrastre, edición y resultado organizado
 │   │   ├── images-to-pdf/      # Imágenes, ajustes, vista previa y resultado
-│   │   └── pdf-to-images/      # Selección, ajustes, muestra y descargas
+│   │   ├── pdf-to-images/      # Selección, ajustes, muestra y descargas
+│   │   └── compress-pdf/       # Análisis, niveles, comparación y resultado
 │   └── ui/                     # Componentes shadcn/ui
 ├── config/
 │   ├── site.ts                 # Identidad y navegación
@@ -101,6 +107,7 @@ src/
 ├── hooks/use-organize-history.ts # Historial ligero de organización
 ├── hooks/use-images-to-pdf.ts    # Selección, orden, ajustes y generación
 ├── hooks/use-pdf-to-images.ts    # Páginas, renderizado, ZIP y limpieza
+├── hooks/use-compress-pdf.ts      # Carga, motor local, comparación y limpieza
 ├── lib/
 │   ├── utils.ts
 │   ├── images/                  # Validación real y miniaturas reducidas
@@ -124,6 +131,9 @@ src/
 │       ├── pdf-to-images-layout.ts # DPI y límites de dimensiones
 │       ├── pdf.worker.ts       # Documentos retenidos solo en memoria
 │       ├── worker-client.ts    # Mensajes, progreso y terminación
+│       ├── compress-pdf.ts     # Análisis, ejecución y validación de QPDF
+│       ├── compression.worker.ts # QPDF WASM aislado del hilo principal
+│       ├── compression-worker-client.ts # Comunicación y cancelación
 │       ├── errors.ts           # Mensajes seguros y comprensibles
 │       └── download.ts         # Nombre descargable y tamaños
 └── types/
@@ -131,7 +141,9 @@ src/
     ├── pdf.ts
     ├── split-pdf.ts
     ├── images-to-pdf.ts
-    └── pdf-to-images.ts
+    ├── pdf-to-images.ts
+    └── compress-pdf.ts
+scripts/sync-qpdf-wasm.mjs       # Copia el motor local durante la instalación
 tests/
 ├── frontend.spec.ts            # Catálogo, navegación y accesibilidad
 ├── pdf-logic.spec.ts           # Pruebas de validación y combinación
@@ -144,6 +156,8 @@ tests/
 ├── images-to-pdf.spec.ts       # Formatos, arrastre y conversión en navegador
 ├── pdf-to-images-logic.spec.ts # DPI, rangos, límites y nombres
 ├── pdf-to-images.spec.ts       # Formatos, selección, ZIP y privacidad
+├── compress-logic.spec.ts      # Análisis y niveles de compresión
+├── compress-pdf.spec.ts        # Reducción, contenido, errores y privacidad
 ├── helpers/pdf-fixtures.ts     # Documentos de prueba generados en memoria
 └── fixtures/                  # Ejemplos cifrados con atribución MIT
 playwright.config.ts
@@ -172,8 +186,9 @@ Se conserva una sola ruta dinámica `/tools/[slug]/`; cada herramienta tiene su 
 | Carátulas de PDF      | `pdfjs-dist` 6.4.299, cargado al seleccionar archivos                       |
 | Descarga ZIP          | `jszip` 3.10.2, cargado solo al preparar varios resultados                  |
 | Arrastre de páginas   | `@dnd-kit/core` 6.3.1, `sortable` 10.0.0 y `utilities` 3.2.2                |
+| Compresión de PDF     | `@neslinesli93/qpdf-wasm` 0.3.0, QPDF cargado bajo demanda en un worker     |
 
-Las versiones exactas están registradas en `package-lock.json`. Imágenes a PDF reutiliza `pdf-lib`, `dnd-kit` y las APIs nativas File, Blob, Canvas, ImageBitmap y Web Worker. PDF a imágenes reutiliza `pdfjs-dist`, Canvas, Blob y `jszip`. Las fases 5 y 6 no añaden dependencias. No hay autenticación, bases de datos ni backend.
+Las versiones exactas están registradas en `package-lock.json`. Imágenes a PDF reutiliza `pdf-lib`, `dnd-kit` y las APIs nativas File, Blob, Canvas, ImageBitmap y Web Worker. PDF a imágenes reutiliza `pdfjs-dist`, Canvas, Blob y `jszip`. Comprimir PDF añade el paquete ISC `@neslinesli93/qpdf-wasm`; `postinstall` copia su binario a `public/wasm/qpdf.wasm`, que Next incluye en la exportación estática. No hay autenticación, bases de datos ni backend.
 
 ## Funcionamiento y privacidad de Unir PDF
 
@@ -218,6 +233,14 @@ La selección admite clic, toque, teclado, todas, ninguna y rangos como `1-3, 6,
 
 La conversión procesa una página a la vez. Cada Canvas se libera después de codificar un Blob y se comprueba que su MIME sea JPG, PNG o WebP según lo solicitado. JPG usa fondo blanco; PNG y WebP permiten fondo blanco, color personalizado o transparencia cuando el PDF no dibuja un fondo opaco. Los resultados conservan su número de página original y `jszip` se carga solo al preparar varias descargas.
 
+## Funcionamiento y privacidad de Comprimir PDF
+
+El archivo se valida y analiza dentro de un Web Worker. La interfaz recibe únicamente su número de páginas y el recuento de imágenes y flujos; la primera página se renderiza como carátula local con PDF.js. El motor QPDF WebAssembly se carga desde `/wasm/qpdf.wasm` en el mismo sitio cuando comienza la primera compresión. Ningún documento se incluye en una petición de red.
+
+El nivel **Suave** genera flujos de objetos y comprime flujos compatibles. **Equilibrada** también vuelve a comprimir flujos Flate con nivel máximo. **Alta** añade la conversión de imágenes compatibles a JPEG con calidad 60 y solo se habilita cuando el análisis detecta imágenes. Esta estrategia conserva páginas y contenido PDF; no rasteriza el documento completo. La reducción final depende de cómo fue creado el archivo original.
+
+QPDF escribe el resultado en su sistema de archivos virtual y la aplicación vuelve a validarlo antes de mostrarlo. Si el archivo final no pesa menos, Archiva descarta esa copia y recomienda conservar el original. El progreso refleja las etapas reales del motor sin inventar porcentajes. Cancelar termina el worker; reiniciar o salir revoca las URLs temporales y libera los archivos en memoria.
+
 ## Limitaciones conocidas
 
 - Los PDF cifrados o protegidos se rechazan; no se solicitan contraseñas ni se elude su protección.
@@ -229,6 +252,8 @@ La conversión procesa una página a la vez. Cada Canvas se libera después de c
 - Imágenes muy grandes pueden superar la memoria disponible durante la decodificación o el recorte. JPEG se conserva directamente cuando es posible; girarlo o usar Rellenar requiere recodificación con calidad alta. La orientación EXIF poco habitual puede depender de cómo la interprete el navegador.
 - PDF a imágenes limita cada Canvas a 16 384 píxeles por lado y 40 millones de píxeles. Una exportación extensa a 300 DPI puede usar mucha memoria porque los Blobs terminados se conservan para permitir descargas individuales y ZIP.
 - El navegador puede no codificar WebP; en ese caso la opción se deshabilita y se ofrecen PNG y JPG. El DPI determina las dimensiones de renderizado, pero Canvas no garantiza conservar metadatos físicos de DPI dentro del archivo.
+- Comprimir PDF no puede garantizar una reducción: un documento ya optimizado puede quedar igual o crecer. En ese caso no se ofrece una descarga peor. El nivel alto solo reduce imágenes que QPDF considera compatibles; no redimensiona todas las imágenes ni rasteriza páginas. Las firmas digitales dejan de ser válidas al reescribir el archivo y los PDF cifrados se rechazan.
+- El binario local de QPDF ocupa aproximadamente 1,33 MB y se carga bajo demanda. Los PDF muy grandes siguen limitados por la memoria disponible del navegador; cancelar interrumpe el worker completo porque QPDF no expone progreso granular durante una operación.
 - Al salir, recargar o reiniciar se pierde la selección y el resultado que no se haya descargado. No existe persistencia de documentos.
 
 ## Validaciones
@@ -245,7 +270,7 @@ Las pruebas utilizan **la exportación real de `out/`** en un servidor estático
 
 - Búsqueda, categorías, enlaces directos, recarga y estado vacío.
 - Navegación de escritorio, teclado y menú móvil.
-- Las 16 páginas y disponibilidad de Unir, Dividir, Organizar, Imágenes a PDF y PDF a imágenes; las otras 11 mantienen la carga deshabilitada.
+- Las 16 páginas y disponibilidad de Unir, Dividir, Comprimir, Organizar, Imágenes a PDF y PDF a imágenes; las otras 10 mantienen la carga deshabilitada.
 - Ausencia de solicitudes de escritura o solicitudes a otros dominios durante el recorrido de las herramientas.
 - Persistencia de tema y preferencia del sistema.
 - Ausencia de desbordamiento horizontal a 320, 390, 768, 1024, 1440 y 1920 px.
@@ -268,17 +293,19 @@ Las pruebas utilizan **la exportación real de `out/`** en un servidor estático
 - PDF a imágenes: selección individual, todas, ninguna y rangos sin duplicados; miniaturas reales, vista previa, JPG, PNG transparente y WebP con comprobación del MIME.
 - Cálculo de 96, 150, 300 y DPI personalizado, páginas verticales y horizontales, calidad, fondo blanco, límites de Canvas, progreso, cancelación, nombres, descargas y ZIP válido.
 - Prueba principal con las páginas 2, 4, 6 y 8 de un PDF de 10 páginas convertidas a JPG de 150 DPI sin solicitudes externas.
+- Comprimir PDF: análisis de imágenes y flujos, estrategias diferenciadas, reducción real, resultado descargable válido y conservación exacta de los operadores de contenido.
+- Nivel alto sobre un PDF mixto para verificar optimización de imagen sin rasterizar el texto; rechazo de documentos dañados y cifrados, sustitución, móvil, tema oscuro, accesibilidad y ausencia de transmisión del archivo.
 
-Validación de la fase 6: TypeScript, lint, compilación y exportación estática correctas. Las 69 pruebas se ejecutan sobre el sitio exportado e incluyen los cinco flujos, cancelación y limpieza de recursos.
+Validación de la fase 7: TypeScript, lint, compilación y exportación estática correctas. Las 78 pruebas se ejecutan sobre el sitio exportado e incluyen los seis flujos, cancelación y limpieza de recursos.
 
 Las capturas de revisión se generan en `test-results/` (ignorado por Git). Las comprobaciones de accesibilidad automatizadas no sustituyen una auditoría manual completa ni pruebas con todos los navegadores.
 
 ### Auditoría de dependencias
 
-Al 10 de octubre de 2026, `npm audit` identifica cinco avisos de severidad alta en la cadena **de desarrollo** `eslint-config-next → @next/eslint-plugin-next → fast-glob → micromatch → braces`. El registro aún ofrece `braces` 3.0.3 como última versión, sin parche para el aviso de anidamiento de patrones. No se aplicó la sugerencia automática de bajar Next ESLint a una versión mayor anterior. Estas dependencias no forman parte del sitio exportado. Se debe revisar el aviso al actualizar el entorno de desarrollo.
+Al 11 de octubre de 2026, `npm audit` identifica cinco avisos de severidad alta en la cadena **de desarrollo** `eslint-config-next → @next/eslint-plugin-next → fast-glob → micromatch → braces`. El registro aún ofrece `braces` 3.0.3 como última versión, sin parche para el aviso de anidamiento de patrones. No se aplicó la sugerencia automática de bajar Next ESLint a una versión mayor anterior. Estas dependencias no forman parte del sitio exportado. Se debe revisar el aviso al actualizar el entorno de desarrollo.
 
 Se fija una versión corregida de `compression` (>= 1.8.2) mediante `overrides` para la vista previa estática. Las dependencias de producción pasan `npm audit --omit=dev`.
 
 ## Próximas herramientas
 
-Unir, Dividir, Organizar, Imágenes a PDF y PDF a imágenes están habilitadas. Las otras 11 herramientas se implementarán individualmente cuando se acuerde su alcance, incorporando sus motores bajo demanda y verificando su procesamiento local. Las conversiones Word/PowerPoint requieren evaluar fidelidad y compatibilidad antes de anunciar su disponibilidad.
+Unir, Dividir, Comprimir, Organizar, Imágenes a PDF y PDF a imágenes están habilitadas. Las otras 10 herramientas se implementarán individualmente cuando se acuerde su alcance, incorporando sus motores bajo demanda y verificando su procesamiento local. Las conversiones Word/PowerPoint requieren evaluar fidelidad y compatibilidad antes de anunciar su disponibilidad.

@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "postinstall": "npm run prepare:wasm",
+    "prepare:wasm": "node scripts/sync-qpdf-wasm.mjs",
     "dev": "next dev --hostname 127.0.0.1",
     "build": "next build",
     "start": "serve out -l 3000",
@@ -16,6 +18,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@fontsource-variable/dm-sans": "^5.3.0",
     "@fontsource-variable/manrope": "^5.3.0",
+    "@neslinesli93/qpdf-wasm": "^0.3.0",
     "@radix-ui/react-dropdown-menu": "^2.1.25",
     "@radix-ui/react-slot": "^1.4.0",
     "class-variance-authority": "^0.7.1",
