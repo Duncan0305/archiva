@@ -221,3 +221,32 @@
     transform: none;
   }
 }
+
+#word-print-root {
+  display: none;
+}
+
+.docx-preview-content .archiva-docx-wrapper {
+  min-width: max-content;
+}
+
+@media print {
+  body.printing-word-document > :not(#word-print-root) {
+    display: none !important;
+  }
+  body.printing-word-document #word-print-root {
+    display: block !important;
+  }
+  body.printing-word-document #word-print-root .docx-preview-content {
+    overflow: visible !important;
+  }
+  body.printing-word-document #word-print-root .archiva-docx-wrapper {
+    min-width: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+  }
+  body.printing-word-document #word-print-root section.archiva-docx {
+    margin: 0 auto !important;
+    box-shadow: none !important;
+  }
+}

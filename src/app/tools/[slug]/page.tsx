@@ -8,6 +8,7 @@ import { OrganizePdfTool } from "@/components/tools/organize-pdf/organize-pdf-to
 import { ImagesToPdfTool } from "@/components/tools/images-to-pdf/images-to-pdf-tool";
 import { PdfToImagesTool } from "@/components/tools/pdf-to-images/pdf-to-images-tool";
 import { CompressPdfTool } from "@/components/tools/compress-pdf/compress-pdf-tool";
+import { WordToPdfTool } from "@/components/tools/word-to-pdf/word-to-pdf-tool";
 
 export const dynamicParams = false;
 
@@ -26,7 +27,7 @@ export async function generateMetadata({
       ? `${tool.name} — ${tool.status === "available" ? "Local y privado" : "En desarrollo"}`
       : "Herramienta no encontrada",
     description: tool
-      ? `${tool.description} ${tool.status === "available" ? "Procesa PDF en tu dispositivo, sin subir documentos a un servidor." : "Herramienta planificada, todavía no disponible."}`
+      ? `${tool.description} ${tool.status === "available" ? "Procesa el archivo en tu dispositivo, sin subir documentos a un servidor." : "Herramienta planificada, todavía no disponible."}`
       : undefined,
   };
 }
@@ -52,6 +53,8 @@ export default async function ToolPage({
         <ImagesToPdfTool />
       ) : tool.slug === "pdf-to-images" ? (
         <PdfToImagesTool />
+      ) : tool.slug === "word-to-pdf" ? (
+        <WordToPdfTool />
       ) : undefined}
     </ToolWorkspace>
   );

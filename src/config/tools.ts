@@ -96,7 +96,7 @@ export const tools: Tool[] = [
     description: "Prepara tus documentos de Word para compartirlos como PDF.",
     icon: FileText,
     category: "pdf",
-    status: "planned",
+    status: "available",
     inputLabel: "Un documento Word",
     outputLabel: "Un documento PDF",
   },

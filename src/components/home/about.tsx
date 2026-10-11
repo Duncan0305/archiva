@@ -29,8 +29,8 @@ export function About() {
             <HardDrive className="mb-4 size-5 text-primary" strokeWidth={1.5} />
             <h3 className="text-[12px] font-semibold">En tu dispositivo</h3>
             <p className="mt-2 text-[11px] leading-6 text-muted-foreground">
-              Unir, Dividir, Organizar, Comprimir y convertir entre PDF e
-              imágenes se ejecutan localmente, sin subir archivos a un servidor.
+              Unir, Dividir, Organizar, Comprimir y convertir PDF, imágenes y Word
+              se ejecuta localmente, sin subir archivos a un servidor.
             </p>
           </div>
           <div>
@@ -48,8 +48,9 @@ export function About() {
             <Sparkles className="mb-4 size-5 text-primary" strokeWidth={1.5} />
             <h3 className="text-[12px] font-semibold">Un buen comienzo</h3>
             <p className="mt-2 text-[11px] leading-6 text-muted-foreground">
-              Ya puedes unir, dividir, organizar, comprimir y convertir entre PDF
-              e imágenes. Preparamos las demás herramientas con el mismo cuidado.
+              Ya puedes unir, dividir, organizar, comprimir y convertir PDF,
+              imágenes y Word. Preparamos las demás herramientas con el mismo
+              cuidado.
             </p>
             <a
               href="#herramientas"

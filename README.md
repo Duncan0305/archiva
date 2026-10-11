@@ -1,6 +1,6 @@
 # Archiva
 
-Archiva reúne herramientas para gestionar, organizar y transformar archivos directamente desde el navegador. **Unir, Dividir, Comprimir, Organizar, Imágenes a PDF y PDF a imágenes están disponibles:** combinan documentos, extraen páginas, reducen su tamaño, reorganizan PDF y convierten entre PDF e imágenes. Las otras 10 herramientas permanecen identificadas como «Próximamente».
+Archiva reúne herramientas para gestionar, organizar y transformar archivos directamente desde el navegador. **Unir, Dividir, Comprimir, Organizar, Imágenes a PDF, PDF a imágenes y Word a PDF están disponibles:** combinan documentos, extraen páginas, reducen su tamaño, reorganizan PDF y convierten entre formatos. Las otras 9 herramientas permanecen identificadas como «Próximamente».
 
 Los documentos se procesan en memoria en el dispositivo del usuario. No hay backend, subidas de documentos, cuentas ni servicios externos de conversión.
 
@@ -26,6 +26,8 @@ Para probar Imágenes a PDF, abrir [http://127.0.0.1:3000/tools/images-to-pdf/](
 Para probar PDF a imágenes, abrir [http://127.0.0.1:3000/tools/pdf-to-images/](http://127.0.0.1:3000/tools/pdf-to-images/), seleccionar un PDF, elegir sus páginas, el formato y la resolución, y pulsar **Convertir**. Las imágenes pueden descargarse individualmente o en un ZIP.
 
 Para probar Comprimir PDF, abrir [http://127.0.0.1:3000/tools/compress-pdf/](http://127.0.0.1:3000/tools/compress-pdf/), seleccionar un PDF, elegir un nivel y pulsar **Comprimir PDF**. Archiva compara los tamaños reales y solo ofrece el resultado cuando ocupa menos que el original.
+
+Para probar Word a PDF, abrir [http://127.0.0.1:3000/tools/word-to-pdf/](http://127.0.0.1:3000/tools/word-to-pdf/), seleccionar un DOCX y revisar la representación local. Después, editar el nombre sugerido y pulsar **Guardar como PDF mediante impresión**; en el diálogo del navegador se debe elegir **Guardar como PDF**.
 
 Para detener el servidor, pulsar `Ctrl + C` en su terminal. Si el proyecto ya está ejecutándose, utilizar la dirección del servidor existente en lugar de iniciar una segunda instancia.
 
@@ -72,6 +74,9 @@ La configuración sigue la [exportación estática de Next.js](https://nextjs.or
 - Comprimir PDF con validación y análisis reales, carátula del documento, tres niveles explicados y ejecución de QPDF WebAssembly en un worker local.
 - Optimización estructural, recompresión de flujos e imágenes compatibles según el nivel, sin rasterizar todas las páginas ni convertir su texto en una imagen.
 - Comparación de tamaño real, validación del resultado, aviso honesto cuando no existe reducción, cancelación, descarga renombrable y limpieza de recursos.
+- Word a PDF con validación estructural del contenedor DOCX, rechazo de archivos dañados, cifrados, macros y recursos remotos activos.
+- Vista previa semántica local de texto, estilos, listas, tablas, imágenes, encabezados, pies, saltos manuales y secciones compatibles mediante `docx-preview`.
+- Hoja de impresión aislada que conserva texto seleccionable, nombre de resultado editable y flujo explícito mediante el diálogo nativo **Guardar como PDF**.
 - Transiciones CSS breves, reposicionamiento de tarjetas con Motion y respeto a `prefers-reduced-motion`.
 - Metadatos por herramienta, favicon propio, tipografías servidas desde el mismo sitio y página 404.
 
@@ -96,7 +101,8 @@ src/
 │   │   ├── organize-pdf/       # Arrastre, edición y resultado organizado
 │   │   ├── images-to-pdf/      # Imágenes, ajustes, vista previa y resultado
 │   │   ├── pdf-to-images/      # Selección, ajustes, muestra y descargas
-│   │   └── compress-pdf/       # Análisis, niveles, comparación y resultado
+│   │   ├── compress-pdf/       # Análisis, niveles, comparación y resultado
+│   │   └── word-to-pdf/        # Carga DOCX, vista semántica e impresión
 │   └── ui/                     # Componentes shadcn/ui
 ├── config/
 │   ├── site.ts                 # Identidad y navegación
@@ -108,7 +114,9 @@ src/
 ├── hooks/use-images-to-pdf.ts    # Selección, orden, ajustes y generación
 ├── hooks/use-pdf-to-images.ts    # Páginas, renderizado, ZIP y limpieza
 ├── hooks/use-compress-pdf.ts      # Carga, motor local, comparación y limpieza
+├── hooks/use-word-to-pdf.ts       # Validación, análisis, vista previa e impresión
 ├── lib/
+│   ├── docx/                     # Inspección segura y representación DOCX
 │   ├── utils.ts
 │   ├── images/                  # Validación real y miniaturas reducidas
 │   └── pdf/
@@ -142,7 +150,8 @@ src/
     ├── split-pdf.ts
     ├── images-to-pdf.ts
     ├── pdf-to-images.ts
-    └── compress-pdf.ts
+    ├── compress-pdf.ts
+    └── word-to-pdf.ts
 scripts/sync-qpdf-wasm.mjs       # Copia el motor local durante la instalación
 tests/
 ├── frontend.spec.ts            # Catálogo, navegación y accesibilidad
@@ -158,6 +167,9 @@ tests/
 ├── pdf-to-images.spec.ts       # Formatos, selección, ZIP y privacidad
 ├── compress-logic.spec.ts      # Análisis y niveles de compresión
 ├── compress-pdf.spec.ts        # Reducción, contenido, errores y privacidad
+├── word-to-pdf-logic.spec.ts   # Estructura DOCX, seguridad y nombres
+├── word-to-pdf.spec.ts         # Vista previa, impresión, móvil y privacidad
+├── helpers/docx-fixtures.ts    # DOCX complejos generados en memoria
 ├── helpers/pdf-fixtures.ts     # Documentos de prueba generados en memoria
 └── fixtures/                  # Ejemplos cifrados con atribución MIT
 playwright.config.ts
@@ -187,8 +199,9 @@ Se conserva una sola ruta dinámica `/tools/[slug]/`; cada herramienta tiene su 
 | Descarga ZIP          | `jszip` 3.10.2, cargado solo al preparar varios resultados                  |
 | Arrastre de páginas   | `@dnd-kit/core` 6.3.1, `sortable` 10.0.0 y `utilities` 3.2.2                |
 | Compresión de PDF     | `@neslinesli93/qpdf-wasm` 0.3.0, QPDF cargado bajo demanda en un worker     |
+| Vista previa de Word  | `docx-preview` 0.4.1, cargado bajo demanda tras validar el DOCX              |
 
-Las versiones exactas están registradas en `package-lock.json`. Imágenes a PDF reutiliza `pdf-lib`, `dnd-kit` y las APIs nativas File, Blob, Canvas, ImageBitmap y Web Worker. PDF a imágenes reutiliza `pdfjs-dist`, Canvas, Blob y `jszip`. Comprimir PDF añade el paquete ISC `@neslinesli93/qpdf-wasm`; `postinstall` copia su binario a `public/wasm/qpdf.wasm`, que Next incluye en la exportación estática. No hay autenticación, bases de datos ni backend.
+Las versiones exactas están registradas en `package-lock.json`. Imágenes a PDF reutiliza `pdf-lib`, `dnd-kit` y las APIs nativas File, Blob, Canvas, ImageBitmap y Web Worker. PDF a imágenes reutiliza `pdfjs-dist`, Canvas, Blob y `jszip`. Comprimir PDF añade el paquete ISC `@neslinesli93/qpdf-wasm`; `postinstall` copia su binario a `public/wasm/qpdf.wasm`, que Next incluye en la exportación estática. Word a PDF añade `docx-preview`, distribuido con licencia Apache-2.0. No hay autenticación, bases de datos ni backend.
 
 ## Funcionamiento y privacidad de Unir PDF
 
@@ -241,6 +254,16 @@ El nivel **Suave** genera flujos de objetos y comprime flujos compatibles. **Equ
 
 QPDF escribe el resultado en su sistema de archivos virtual y la aplicación vuelve a validarlo antes de mostrarlo. Si el archivo final no pesa menos, Archiva descarta esa copia y recomienda conservar el original. El progreso refleja las etapas reales del motor sin inventar porcentajes. Cancelar termina el worker; reiniciar o salir revoca las URLs temporales y libera los archivos en memoria.
 
+## Funcionamiento y privacidad de Word a PDF
+
+La prueba de concepto comparó tres enfoques. `docx-preview` ofrece representación semántica en navegador, conserva el texto y tiene un tamaño moderado; su límite principal es que HTML no replica toda la paginación de Word. `@matbee/libreoffice-converter` proporciona un LibreOffice WebAssembly real, pero añade unos 240 MB y exige aislamiento COOP/COEP para `SharedArrayBuffer`, condiciones poco adecuadas para la exportación estática actual. OpenDoc sigue publicado como versión previa y su SDK público todavía no está disponible. Se eligió `docx-preview` con impresión nativa porque es la alternativa local estable que pasó la prueba sin convertir el documento en imágenes ni prometer fidelidad total.
+
+El archivo se limita a DOCX y se inspecciona como contenedor ZIP antes de representarlo. Archiva comprueba las partes Open Packaging Convention necesarias, el tipo principal del documento y sus relaciones. Rechaza archivos vacíos, dañados, cifrados, con macros o con recursos externos activos; los hipervínculos externos se conservan como enlaces con una advertencia, sin abrirlos ni descargarlos automáticamente. El tamaño máximo es 50 MB para reducir el riesgo de agotar la memoria de la pestaña.
+
+Después de validar, `docx-preview` interpreta el documento completamente en el navegador y construye HTML semántico. La vista admite contenido compatible como texto, formatos, listas, tablas, imágenes incrustadas, encabezados, pies, saltos manuales y secciones. El motor se importa bajo demanda y las imágenes incrustadas permanecen como recursos de memoria; no se cargan fuentes, documentos ni imágenes desde dominios externos.
+
+La conversión utiliza una hoja de impresión específica. Archiva clona únicamente el documento representado, elimina la escala de la vista previa, oculta la aplicación y abre `window.print()`. El usuario elige **Guardar como PDF** en el diálogo del navegador. Este flujo conserva texto seleccionable y evita rasterizar cada página. Como el navegador controla la creación y el destino del archivo, Archiva no afirma que el PDF se haya guardado ni ofrece una descarga simulada.
+
 ## Limitaciones conocidas
 
 - Los PDF cifrados o protegidos se rechazan; no se solicitan contraseñas ni se elude su protección.
@@ -255,6 +278,9 @@ QPDF escribe el resultado en su sistema de archivos virtual y la aplicación vue
 - Comprimir PDF no puede garantizar una reducción: un documento ya optimizado puede quedar igual o crecer. En ese caso no se ofrece una descarga peor. El nivel alto solo reduce imágenes que QPDF considera compatibles; no redimensiona todas las imágenes ni rasteriza páginas. Las firmas digitales dejan de ser válidas al reescribir el archivo y los PDF cifrados se rechazan.
 - El binario local de QPDF ocupa aproximadamente 1,33 MB y se carga bajo demanda. Los PDF muy grandes siguen limitados por la memoria disponible del navegador; cancelar interrumpe el worker completo porque QPDF no expone progreso granular durante una operación.
 - Al salir, recargar o reiniciar se pierde la selección y el resultado que no se haya descargado. No existe persistencia de documentos.
+- Word a PDF admite únicamente DOCX, no el formato binario DOC. `docx-preview` no es el motor de maquetación de Microsoft Word: las fuentes no instaladas pueden sustituirse y los saltos automáticos, campos, objetos incrustados, cambios controlados y tablas entre páginas pueden variar.
+- Los saltos manuales y secciones compatibles se respetan, pero la paginación final depende del navegador y de su diálogo de impresión. Archiva conserva el tamaño y la orientación interpretados; no ofrece ajustes de A4, Carta, márgenes u orientación que el motor no pueda aplicar con fiabilidad.
+- El nombre escrito se usa como sugerencia mediante el título del documento. El navegador puede cambiarlo y no expone a la página si el usuario guardó o canceló. Por ello no es posible mostrar bytes, tamaño ni una descarga del PDF resultante dentro de Archiva.
 
 ## Validaciones
 
@@ -270,7 +296,7 @@ Las pruebas utilizan **la exportación real de `out/`** en un servidor estático
 
 - Búsqueda, categorías, enlaces directos, recarga y estado vacío.
 - Navegación de escritorio, teclado y menú móvil.
-- Las 16 páginas y disponibilidad de Unir, Dividir, Comprimir, Organizar, Imágenes a PDF y PDF a imágenes; las otras 10 mantienen la carga deshabilitada.
+- Las 16 páginas y disponibilidad de Unir, Dividir, Comprimir, Organizar, Imágenes a PDF, PDF a imágenes y Word a PDF; las otras 9 mantienen la carga deshabilitada.
 - Ausencia de solicitudes de escritura o solicitudes a otros dominios durante el recorrido de las herramientas.
 - Persistencia de tema y preferencia del sistema.
 - Ausencia de desbordamiento horizontal a 320, 390, 768, 1024, 1440 y 1920 px.
@@ -295,8 +321,11 @@ Las pruebas utilizan **la exportación real de `out/`** en un servidor estático
 - Prueba principal con las páginas 2, 4, 6 y 8 de un PDF de 10 páginas convertidas a JPG de 150 DPI sin solicitudes externas.
 - Comprimir PDF: análisis de imágenes y flujos, estrategias diferenciadas, reducción real, resultado descargable válido y conservación exacta de los operadores de contenido.
 - Nivel alto sobre un PDF mixto para verificar optimización de imagen sin rasterizar el texto; rechazo de documentos dañados y cifrados, sustitución, móvil, tema oscuro, accesibilidad y ausencia de transmisión del archivo.
+- Word a PDF: DOCX de cinco páginas con texto español, estilos, lista, tabla, imagen, encabezado, pie, saltos y sección horizontal; validación estructural, arrastre, reemplazo y limpieza.
+- Rechazo de DOCX falsos, macros y recursos externos; advertencias de enlaces y fuentes; vista móvil, tema oscuro, accesibilidad y ausencia de solicitudes con el documento.
+- Impresión real a un PDF válido desde Chromium y extracción posterior de su texto para comprobar que sigue siendo seleccionable y que no se pierde la última página.
 
-Validación de la fase 7: TypeScript, lint, compilación y exportación estática correctas. Las 78 pruebas se ejecutan sobre el sitio exportado e incluyen los seis flujos, cancelación y limpieza de recursos.
+Validación de la fase 8: TypeScript, lint, compilación y exportación estática correctas. Las 85 pruebas se ejecutan sobre el sitio exportado e incluyen los siete flujos funcionales, cancelación y limpieza de recursos.
 
 Las capturas de revisión se generan en `test-results/` (ignorado por Git). Las comprobaciones de accesibilidad automatizadas no sustituyen una auditoría manual completa ni pruebas con todos los navegadores.
 
@@ -308,4 +337,4 @@ Se fija una versión corregida de `compression` (>= 1.8.2) mediante `overrides` 
 
 ## Próximas herramientas
 
-Unir, Dividir, Comprimir, Organizar, Imágenes a PDF y PDF a imágenes están habilitadas. Las otras 10 herramientas se implementarán individualmente cuando se acuerde su alcance, incorporando sus motores bajo demanda y verificando su procesamiento local. Las conversiones Word/PowerPoint requieren evaluar fidelidad y compatibilidad antes de anunciar su disponibilidad.
+Unir, Dividir, Comprimir, Organizar, Imágenes a PDF, PDF a imágenes y Word a PDF están habilitadas. Las otras 9 herramientas se implementarán individualmente cuando se acuerde su alcance, incorporando sus motores bajo demanda y verificando su procesamiento local. PowerPoint a PDF requiere evaluar fidelidad y compatibilidad antes de anunciar su disponibilidad.

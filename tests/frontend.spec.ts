@@ -120,6 +120,12 @@ test("las 16 rutas exportadas son honestas y no suben archivos", async ({
       ).toBeEnabled();
       continue;
     }
+    if (path === "/tools/word-to-pdf/") {
+      await expect(
+        page.getByRole("button", { name: "Seleccionar DOCX" }),
+      ).toBeEnabled();
+      continue;
+    }
     await expect(
       page.getByText("Estamos preparando esta herramienta"),
     ).toBeVisible();

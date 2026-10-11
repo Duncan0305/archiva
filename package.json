@@ -23,6 +23,7 @@
     "@radix-ui/react-slot": "^1.4.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "docx-preview": "^0.4.1",
     "jszip": "^3.10.2",
     "lucide-react": "^1.55.0",
     "motion": "^14.1.0",
