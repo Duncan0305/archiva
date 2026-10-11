@@ -21,6 +21,7 @@ export type PdfErrorCode =
   | "merge"
   | "split"
   | "organize"
+  | "images"
   | "cancelled";
 
 export interface PdfIssue {

@@ -127,7 +127,7 @@ export const tools: Tool[] = [
     description: "Reúne tus imágenes en un documento fácil de compartir.",
     icon: Images,
     category: "pdf",
-    status: "planned",
+    status: "available",
     inputLabel: "Archivos de imagen",
     outputLabel: "Un documento PDF",
   },

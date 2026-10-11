@@ -29,8 +29,8 @@ export function About() {
             <HardDrive className="mb-4 size-5 text-primary" strokeWidth={1.5} />
             <h3 className="text-[12px] font-semibold">En tu dispositivo</h3>
             <p className="mt-2 text-[11px] leading-6 text-muted-foreground">
-              Unir, Dividir y Organizar PDF procesan tus documentos localmente,
-              desde el navegador, sin subirlos a un servidor.
+              Unir, Dividir, Organizar e Imágenes a PDF procesan tus archivos
+              localmente, sin subirlos a un servidor.
             </p>
           </div>
           <div>
@@ -48,8 +48,8 @@ export function About() {
             <Sparkles className="mb-4 size-5 text-primary" strokeWidth={1.5} />
             <h3 className="text-[12px] font-semibold">Un buen comienzo</h3>
             <p className="mt-2 text-[11px] leading-6 text-muted-foreground">
-              Ya puedes unir, dividir y organizar tus PDF. Preparamos las demás
-              herramientas con el mismo cuidado.
+              Ya puedes unir, dividir, organizar y crear PDF desde imágenes.
+              Preparamos las demás herramientas con el mismo cuidado.
             </p>
             <a
               href="#herramientas"

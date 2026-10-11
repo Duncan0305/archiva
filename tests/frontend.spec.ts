@@ -102,6 +102,12 @@ test("las 16 rutas exportadas son honestas y no suben archivos", async ({
       ).toBeEnabled();
       continue;
     }
+    if (path === "/tools/images-to-pdf/") {
+      await expect(
+        page.getByRole("button", { name: "Seleccionar imágenes" }),
+      ).toBeEnabled();
+      continue;
+    }
     await expect(
       page.getByText("Estamos preparando esta herramienta"),
     ).toBeVisible();

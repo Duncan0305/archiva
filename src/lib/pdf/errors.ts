@@ -19,6 +19,8 @@ const messages: Record<PdfErrorCode, string> = {
     "No pudimos dividir este documento. Puede contener elementos incompatibles. Prueba con otro PDF.",
   organize:
     "No pudimos organizar este documento. Vuelve a seleccionarlo e inténtalo de nuevo.",
+  images:
+    "No pudimos crear el PDF con estas imágenes. Prueba con archivos más pequeños o vuelve a seleccionarlos.",
   cancelled: "La operación se ha cancelado.",
 };
 
