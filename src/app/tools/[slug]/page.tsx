@@ -4,6 +4,7 @@ import { getTool, tools } from "@/config/tools";
 import { ToolWorkspace } from "@/components/tools/tool-workspace";
 import { MergePdfTool } from "@/components/tools/merge-pdf/merge-pdf-tool";
 import { SplitPdfTool } from "@/components/tools/split-pdf/split-pdf-tool";
+import { OrganizePdfTool } from "@/components/tools/organize-pdf/organize-pdf-tool";
 
 export const dynamicParams = false;
 
@@ -40,6 +41,8 @@ export default async function ToolPage({
         <MergePdfTool />
       ) : tool.slug === "split-pdf" ? (
         <SplitPdfTool />
+      ) : tool.slug === "organize-pdf" ? (
+        <OrganizePdfTool />
       ) : undefined}
     </ToolWorkspace>
   );

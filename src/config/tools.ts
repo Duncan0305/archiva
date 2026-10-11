@@ -75,7 +75,7 @@ export const tools: Tool[] = [
     description: "Reordena, elimina y organiza las páginas a tu manera.",
     icon: LayoutGrid,
     category: "pdf",
-    status: "planned",
+    status: "available",
     inputLabel: "Un archivo PDF",
     outputLabel: "Un PDF reorganizado",
   },

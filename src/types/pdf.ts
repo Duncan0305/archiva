@@ -20,6 +20,7 @@ export type PdfErrorCode =
   | "worker"
   | "merge"
   | "split"
+  | "organize"
   | "cancelled";
 
 export interface PdfIssue {

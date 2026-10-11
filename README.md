@@ -1,6 +1,6 @@
 # Archiva
 
-Archiva reúne herramientas para gestionar, organizar y transformar archivos directamente desde el navegador. **Unir PDF y Dividir PDF están disponibles:** combinan o extraen páginas localmente, respetan el orden indicado y permiten descargar resultados. Las otras 14 herramientas permanecen identificadas como «Próximamente».
+Archiva reúne herramientas para gestionar, organizar y transformar archivos directamente desde el navegador. **Unir, Dividir y Organizar PDF están disponibles:** combinan documentos, extraen páginas o permiten reordenarlas, girarlas y eliminarlas antes de descargar el resultado. Las otras 13 herramientas permanecen identificadas como «Próximamente».
 
 Los documentos se procesan en memoria en el dispositivo del usuario. No hay backend, subidas de documentos, cuentas ni servicios externos de conversión.
 
@@ -18,6 +18,8 @@ Abrir [http://127.0.0.1:3000](http://127.0.0.1:3000).
 Para probar Unir PDF, abrir [http://127.0.0.1:3000/tools/merge-pdf/](http://127.0.0.1:3000/tools/merge-pdf/), seleccionar dos PDF, ajustar su orden y pulsar **Unir PDF**. Después se puede cambiar el nombre y descargar el resultado.
 
 Para probar Dividir PDF, abrir [http://127.0.0.1:3000/tools/split-pdf/](http://127.0.0.1:3000/tools/split-pdf/), seleccionar un PDF, examinar las miniaturas numeradas y elegir páginas, rangos o bloques de N páginas. Los resultados se descargan individualmente; si hay varios, se puede preparar un ZIP local.
+
+Para probar Organizar PDF, abrir [http://127.0.0.1:3000/tools/organize-pdf/](http://127.0.0.1:3000/tools/organize-pdf/), seleccionar un PDF y arrastrar directamente sus miniaturas. También se pueden seleccionar varias páginas, girarlas, eliminarlas, deshacer cambios y exportar el nuevo documento.
 
 Para detener el servidor, pulsar `Ctrl + C` en su terminal. Si el proyecto ya está ejecutándose, utilizar la dirección del servidor existente en lugar de iniciar una segunda instancia.
 
@@ -50,6 +52,10 @@ La configuración sigue la [exportación estática de Next.js](https://nextjs.or
 - Dividir PDF con miniaturas visibles de todas las páginas, renderizadas progresivamente, y selección mediante clic, toque o teclado.
 - Extracción de páginas no consecutivas, división por rangos en el orden escrito y bloques de N páginas; vista previa de los grupos antes de procesar.
 - Descarga individual de resultados, nombre editable para un único PDF y ZIP local bajo demanda para varios archivos.
+- Organizar PDF con miniaturas reales, arrastre directo en cuadrícula, desplazamiento visual de las demás páginas y soporte para ratón, toque y teclado.
+- Rotación individual o múltiple, eliminación protegida, selección masiva y controles alternativos accesibles para mover páginas.
+- Historial ligero de 50 operaciones para deshacer, rehacer y restablecer el documento original, sin duplicar el archivo PDF en memoria.
+- Exportación local que conserva el orden, contenido, dimensiones y rotaciones elegidas sin rasterizar las páginas.
 - Transiciones CSS breves, reposicionamiento de tarjetas con Motion y respeto a `prefers-reduced-motion`.
 - Metadatos por herramienta, favicon propio, tipografías servidas desde el mismo sitio y página 404.
 
@@ -70,13 +76,16 @@ src/
 │   ├── shared/                 # Logo, tema y proveedores
 │   ├── tools/                  # Tarjeta y plantilla reutilizable
 │   │   ├── merge-pdf/          # Carga, lista, carátulas y resultado
-│   │   └── split-pdf/          # Carga, modos, cuadrícula y resultados
+│   │   ├── split-pdf/          # Carga, modos, cuadrícula y resultados
+│   │   └── organize-pdf/       # Arrastre, edición y resultado organizado
 │   └── ui/                     # Componentes shadcn/ui
 ├── config/
 │   ├── site.ts                 # Identidad y navegación
 │   └── tools.ts                # Herramientas, categorías y disponibilidad
 ├── hooks/use-merge-pdf.ts       # Estado, bloqueo de operaciones y limpieza
 ├── hooks/use-split-pdf.ts       # Estado de división y limpieza
+├── hooks/use-organize-pdf.ts    # Carga, edición, exportación y limpieza
+├── hooks/use-organize-history.ts # Historial ligero de organización
 ├── lib/
 │   ├── utils.ts
 │   └── pdf/
@@ -89,6 +98,9 @@ src/
 │       ├── page-preview-session.ts # Renderizado progresivo con PDF.js
 │       ├── split.worker.ts     # División en worker local
 │       ├── split-worker-client.ts # Comunicación con el worker
+│       ├── organize-pdf.ts      # Orden, exclusión y rotaciones finales
+│       ├── organize.worker.ts   # Exportación organizada en segundo plano
+│       ├── organize-worker-client.ts # Comunicación con el worker
 │       ├── pdf.worker.ts       # Documentos retenidos solo en memoria
 │       ├── worker-client.ts    # Mensajes, progreso y terminación
 │       ├── errors.ts           # Mensajes seguros y comprensibles
@@ -103,6 +115,8 @@ tests/
 ├── merge-pdf.spec.ts           # Flujos reales en el navegador
 ├── split-logic.spec.ts         # Rangos y resultados PDF
 ├── split-pdf.spec.ts           # Flujos de división y ZIP en navegador
+├── organize-logic.spec.ts      # Orden, rotaciones y páginas excluidas
+├── organize-pdf.spec.ts        # Arrastre, edición y exportación en navegador
 ├── helpers/pdf-fixtures.ts     # Documentos de prueba generados en memoria
 └── fixtures/                  # Ejemplos cifrados con atribución MIT
 playwright.config.ts
@@ -130,8 +144,9 @@ Se conserva una sola ruta dinámica `/tools/[slug]/`; cada herramienta tiene su 
 | Unión local de PDF    | `pdf-lib` 1.17.1, cargado en un Web Worker nativo                           |
 | Carátulas de PDF      | `pdfjs-dist` 6.4.299, cargado al seleccionar archivos                       |
 | Descarga ZIP          | `jszip` 3.10.2, cargado solo al preparar varios resultados                  |
+| Arrastre de páginas   | `@dnd-kit/core` 6.3.1, `sortable` 10.0.0 y `utilities` 3.2.2                |
 
-Las versiones exactas están registradas en `package-lock.json`. Dividir PDF reutiliza `pdf-lib` y PDF.js; en esta fase solo se añade `jszip` para la descarga conjunta. Se utiliza el entorno de pruebas ya existente. No hay autenticación, bases de datos ni backend.
+Las versiones exactas están registradas en `package-lock.json`. Organizar PDF reutiliza `pdf-lib` y PDF.js; en esta fase se añaden únicamente los tres paquetes modulares de `dnd-kit` para el arrastre. Se utiliza el entorno de pruebas ya existente. No hay autenticación, bases de datos ni backend.
 
 ## Funcionamiento y privacidad de Unir PDF
 
@@ -152,6 +167,14 @@ El modo **Elegir páginas** extrae las páginas marcadas en orden original. **Po
 
 Los resultados se entregan como `Blob` y URLs temporales. Con varios archivos, `jszip` se carga solo si se pulsa **Preparar descarga ZIP** y construye el ZIP en memoria, sin solicitudes externas. Las URLs y los workers se liberan al reiniciar, reemplazar el documento o abandonar la herramienta. Los archivos originales y generados no se guardan de forma persistente.
 
+## Funcionamiento y privacidad de Organizar PDF
+
+El PDF se valida una sola vez y permanece en un Web Worker local. PDF.js utiliza una copia temporal para dibujar progresivamente las miniaturas. Cada página se representa mediante un identificador estable, su índice original y la rotación acumulada; arrastrar, rotar o eliminar solo cambia estos datos ligeros.
+
+`dnd-kit` activa el arrastre con una distancia mínima para distinguirlo de un clic. En pantallas táctiles utiliza una pulsación breve con tolerancia al movimiento para conservar el desplazamiento vertical. El sensor de teclado y los controles de posición ofrecen una alternativa accesible. Escape cancela el movimiento sin añadirlo al historial.
+
+Al exportar, `pdf-lib` copia las páginas originales en el orden visible, omite las eliminadas y suma las rotaciones a su orientación original. No rasteriza el contenido. El resultado se crea como un `Blob` descargable y todos los workers, miniaturas y URLs temporales se liberan al reiniciar o salir.
+
 ## Limitaciones conocidas
 
 - Los PDF cifrados o protegidos se rechazan; no se solicitan contraseñas ni se elude su protección.
@@ -159,6 +182,7 @@ Los resultados se entregan como `Blob` y URLs temporales. Con varios archivos, `
 - La validación comprueba estructura y compatibilidad con el motor; no es un renderizador ni una certificación completa del formato PDF. Una página con contenido internamente corrupto podría requerir revisión visual del resultado.
 - No hay un límite artificial de archivos o megabytes. El máximo práctico depende de la memoria disponible y de la complejidad de los documentos. Crear una carátula necesita una copia temporal del archivo; se procesa una a la vez. Se muestran errores de asignación de memoria detectables; si el sistema cierra la pestaña por falta de memoria, JavaScript no puede recuperar esa sesión.
 - Dividir PDF también utiliza una copia temporal para PDF.js. Las miniaturas tienen resolución acotada; la vista sirve para identificar páginas, no para examinar detalles de impresión. El ZIP necesita memoria adicional proporcional a los resultados generados.
+- Organizar PDF conserva un máximo de 50 pasos de historial. Las miniaturas giradas son una representación visual reducida; el PDF final aplica la rotación directamente a cada página.
 - Al salir, recargar o reiniciar se pierde la selección y el resultado que no se haya descargado. No existe persistencia de documentos.
 
 ## Validaciones
@@ -175,7 +199,7 @@ Las pruebas utilizan **la exportación real de `out/`** en un servidor estático
 
 - Búsqueda, categorías, enlaces directos, recarga y estado vacío.
 - Navegación de escritorio, teclado y menú móvil.
-- Las 16 páginas y disponibilidad exclusiva de Unir PDF y Dividir PDF; las otras 14 mantienen la carga deshabilitada.
+- Las 16 páginas y disponibilidad de Unir, Dividir y Organizar PDF; las otras 13 mantienen la carga deshabilitada.
 - Ausencia de solicitudes de escritura o solicitudes a otros dominios durante el recorrido de las herramientas.
 - Persistencia de tema y preferencia del sistema.
 - Ausencia de desbordamiento horizontal a 320, 390, 768, 1024, 1440 y 1920 px.
@@ -190,8 +214,10 @@ Las pruebas utilizan **la exportación real de `out/`** en un servidor estático
 - Renderizado real de carátulas distintas, ampliación, asociación correcta tras reordenar y limpieza de sus URLs.
 - Recuperación tras un fallo de asignación de memoria al crear la descarga, con una nueva selección y combinación correctas.
 - Dividir PDF: miniaturas visibles, selección individual/todas/ninguna, reemplazo, páginas no consecutivas, rangos en orden, bloques con resto, validaciones, descarga individual, ZIP, móvil y privacidad sin red.
+- Organizar PDF: arrastre real de la página 10 a la posición 2, desplazamiento visual durante el gesto, arrastres consecutivos, Escape, toque entre filas y teclado.
+- Selección, rotaciones individuales y múltiples, eliminación, protección de la última página, deshacer, rehacer, restablecer y verificación del contenido descargado.
 
-Validación de la fase 3: TypeScript, lint, compilación y exportación estática correctas. **36 pruebas pasan** sobre el sitio exportado; incluyen ambos flujos, cancelación y limpieza de recursos.
+Validación de la fase 4: TypeScript, lint, compilación y exportación estática correctas. **47 pruebas pasan** sobre el sitio exportado e incluyen los tres flujos, cancelación y limpieza de recursos.
 
 Las capturas de revisión se generan en `test-results/` (ignorado por Git). Las comprobaciones de accesibilidad automatizadas no sustituyen una auditoría manual completa ni pruebas con todos los navegadores.
 
@@ -203,4 +229,4 @@ Se fija una versión corregida de `compression` (>= 1.8.2) mediante `overrides` 
 
 ## Próximas herramientas
 
-Unir PDF y Dividir PDF están habilitadas. Las otras 14 herramientas se implementarán individualmente cuando se acuerde su alcance, incorporando sus motores bajo demanda y verificando su procesamiento local. Las conversiones Word/PowerPoint requieren evaluar fidelidad y compatibilidad antes de anunciar su disponibilidad.
+Unir, Dividir y Organizar PDF están habilitadas. Las otras 13 herramientas se implementarán individualmente cuando se acuerde su alcance, incorporando sus motores bajo demanda y verificando su procesamiento local. Las conversiones Word/PowerPoint requieren evaluar fidelidad y compatibilidad antes de anunciar su disponibilidad.

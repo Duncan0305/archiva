@@ -159,7 +159,7 @@ export function Explorer({ category }: { category: Filter }) {
             </span>
             <span className="flex items-center gap-2 text-muted-foreground">
               <span className="size-1.5 rounded-full bg-primary" />
-              Unir y Dividir PDF ya están disponibles
+              Unir, Dividir y Organizar PDF están disponibles
             </span>
           </div>
         </div>
@@ -295,8 +295,8 @@ export function Explorer({ category }: { category: Filter }) {
             </div>
             <p className="mt-6 flex items-start gap-2 text-[10px] leading-5 text-muted-foreground">
               <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary/60" />
-              Unir y Dividir PDF ya funcionan en tu navegador. Las herramientas
-              marcadas como «Próximamente» siguen en desarrollo.
+              Unir, Dividir y Organizar PDF ya funcionan en tu navegador. Las
+              herramientas marcadas como «Próximamente» siguen en desarrollo.
             </p>
           </div>
         </div>
