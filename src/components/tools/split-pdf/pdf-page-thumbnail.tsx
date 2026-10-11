@@ -2,12 +2,15 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Check, FileText } from "lucide-react";
-import { PagePreviewSession } from "@/lib/pdf/page-preview-session";
 import { cn } from "@/lib/utils";
+
+export interface PageThumbnailSession {
+  render(pageNumber: number, signal: AbortSignal): Promise<Blob>;
+}
 
 interface Props {
   number: number;
-  session: PagePreviewSession;
+  session: PageThumbnailSession;
   selectable: boolean;
   selected: boolean;
   disabled: boolean;

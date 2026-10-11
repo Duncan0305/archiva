@@ -1,11 +1,11 @@
 "use client";
 
 import { PdfPageThumbnail } from "./pdf-page-thumbnail";
-import { PagePreviewSession } from "@/lib/pdf/page-preview-session";
+import type { PageThumbnailSession } from "./pdf-page-thumbnail";
 
 interface Props {
   count: number;
-  session: PagePreviewSession;
+  session: PageThumbnailSession;
   selected: ReadonlySet<number>;
   selectable: boolean;
   disabled: boolean;

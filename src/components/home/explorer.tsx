@@ -159,7 +159,7 @@ export function Explorer({ category }: { category: Filter }) {
             </span>
             <span className="flex items-center gap-2 text-muted-foreground">
               <span className="size-1.5 rounded-full bg-primary" />
-              Cuatro herramientas ya están disponibles
+              Cinco herramientas ya están disponibles
             </span>
           </div>
         </div>
@@ -295,8 +295,8 @@ export function Explorer({ category }: { category: Filter }) {
             </div>
             <p className="mt-6 flex items-start gap-2 text-[10px] leading-5 text-muted-foreground">
               <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary/60" />
-              Unir, Dividir, Organizar e Imágenes a PDF ya funcionan en tu
-              navegador. Las demás siguen en desarrollo.
+              Unir, Dividir, Organizar, Imágenes a PDF y PDF a imágenes ya
+              funcionan en tu navegador. Las demás siguen en desarrollo.
             </p>
           </div>
         </div>

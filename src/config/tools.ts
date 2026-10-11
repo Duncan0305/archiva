@@ -117,7 +117,7 @@ export const tools: Tool[] = [
       "Transforma las páginas de tu documento en imágenes individuales.",
     icon: FileImage,
     category: "pdf",
-    status: "planned",
+    status: "available",
     inputLabel: "Un archivo PDF",
     outputLabel: "Imágenes de cada página",
   },

@@ -1,6 +1,6 @@
 # Archiva
 
-Archiva reúne herramientas para gestionar, organizar y transformar archivos directamente desde el navegador. **Unir, Dividir, Organizar e Imágenes a PDF están disponibles:** combinan documentos, extraen páginas, reorganizan PDF o convierten imágenes en un documento configurable. Las otras 12 herramientas permanecen identificadas como «Próximamente».
+Archiva reúne herramientas para gestionar, organizar y transformar archivos directamente desde el navegador. **Unir, Dividir, Organizar, Imágenes a PDF y PDF a imágenes están disponibles:** combinan documentos, extraen páginas, reorganizan PDF y convierten entre PDF e imágenes. Las otras 11 herramientas permanecen identificadas como «Próximamente».
 
 Los documentos se procesan en memoria en el dispositivo del usuario. No hay backend, subidas de documentos, cuentas ni servicios externos de conversión.
 
@@ -22,6 +22,8 @@ Para probar Dividir PDF, abrir [http://127.0.0.1:3000/tools/split-pdf/](http://1
 Para probar Organizar PDF, abrir [http://127.0.0.1:3000/tools/organize-pdf/](http://127.0.0.1:3000/tools/organize-pdf/), seleccionar un PDF y arrastrar directamente sus miniaturas. También se pueden seleccionar varias páginas, girarlas, eliminarlas, deshacer cambios y exportar el nuevo documento.
 
 Para probar Imágenes a PDF, abrir [http://127.0.0.1:3000/tools/images-to-pdf/](http://127.0.0.1:3000/tools/images-to-pdf/), seleccionar archivos JPG, PNG o WebP, ordenarlos, ajustar la página y pulsar **Crear PDF**.
+
+Para probar PDF a imágenes, abrir [http://127.0.0.1:3000/tools/pdf-to-images/](http://127.0.0.1:3000/tools/pdf-to-images/), seleccionar un PDF, elegir sus páginas, el formato y la resolución, y pulsar **Convertir**. Las imágenes pueden descargarse individualmente o en un ZIP.
 
 Para detener el servidor, pulsar `Ctrl + C` en su terminal. Si el proyecto ya está ejecutándose, utilizar la dirección del servidor existente en lugar de iniciar una segunda instancia.
 
@@ -62,6 +64,9 @@ La configuración sigue la [exportación estática de Next.js](https://nextjs.or
 - Reordenamiento directo de imágenes con ratón, toque o teclado, además de rotación y eliminación individual.
 - Configuración A4, Carta, A3 o tamaño proporcional a la imagen; orientación automática, vertical u horizontal; cuatro márgenes y ajustes Contener o Rellenar.
 - Vista previa ligera de la distribución y exportación de JPG/PNG directa cuando no requieren transformación; WebP, rotaciones y recortes se normalizan localmente mediante Canvas.
+- PDF a imágenes con miniaturas progresivas, selección individual, masiva o por rangos normalizados y vista previa de una página elegida.
+- Exportación real a JPG, PNG o WebP mediante PDF.js y Canvas, con 96, 150, 300 o DPI personalizado, calidad, fondo y transparencia cuando el contenido lo permite.
+- Procesamiento secuencial con progreso por página, cancelación, límites de Canvas, descarga individual y ZIP local con los números de página originales.
 - Transiciones CSS breves, reposicionamiento de tarjetas con Motion y respeto a `prefers-reduced-motion`.
 - Metadatos por herramienta, favicon propio, tipografías servidas desde el mismo sitio y página 404.
 
@@ -84,7 +89,8 @@ src/
 │   │   ├── merge-pdf/          # Carga, lista, carátulas y resultado
 │   │   ├── split-pdf/          # Carga, modos, cuadrícula y resultados
 │   │   ├── organize-pdf/       # Arrastre, edición y resultado organizado
-│   │   └── images-to-pdf/      # Imágenes, ajustes, vista previa y resultado
+│   │   ├── images-to-pdf/      # Imágenes, ajustes, vista previa y resultado
+│   │   └── pdf-to-images/      # Selección, ajustes, muestra y descargas
 │   └── ui/                     # Componentes shadcn/ui
 ├── config/
 │   ├── site.ts                 # Identidad y navegación
@@ -94,6 +100,7 @@ src/
 ├── hooks/use-organize-pdf.ts    # Carga, edición, exportación y limpieza
 ├── hooks/use-organize-history.ts # Historial ligero de organización
 ├── hooks/use-images-to-pdf.ts    # Selección, orden, ajustes y generación
+├── hooks/use-pdf-to-images.ts    # Páginas, renderizado, ZIP y limpieza
 ├── lib/
 │   ├── utils.ts
 │   ├── images/                  # Validación real y miniaturas reducidas
@@ -113,6 +120,8 @@ src/
 │       ├── images-to-pdf.ts     # Cálculo de página y creación del PDF
 │       ├── images-to-pdf.worker.ts # Conversión local en segundo plano
 │       ├── images-to-pdf-worker-client.ts # Comunicación con el worker
+│       ├── pdf-to-images-session.ts # PDF.js, Canvas, codificación y cancelación
+│       ├── pdf-to-images-layout.ts # DPI y límites de dimensiones
 │       ├── pdf.worker.ts       # Documentos retenidos solo en memoria
 │       ├── worker-client.ts    # Mensajes, progreso y terminación
 │       ├── errors.ts           # Mensajes seguros y comprensibles
@@ -120,7 +129,9 @@ src/
 └── types/
     ├── tool.ts
     ├── pdf.ts
-    └── split-pdf.ts
+    ├── split-pdf.ts
+    ├── images-to-pdf.ts
+    └── pdf-to-images.ts
 tests/
 ├── frontend.spec.ts            # Catálogo, navegación y accesibilidad
 ├── pdf-logic.spec.ts           # Pruebas de validación y combinación
@@ -131,6 +142,8 @@ tests/
 ├── organize-pdf.spec.ts        # Arrastre, edición y exportación en navegador
 ├── images-layout.spec.ts       # Tamaños, orientación, márgenes y ajuste
 ├── images-to-pdf.spec.ts       # Formatos, arrastre y conversión en navegador
+├── pdf-to-images-logic.spec.ts # DPI, rangos, límites y nombres
+├── pdf-to-images.spec.ts       # Formatos, selección, ZIP y privacidad
 ├── helpers/pdf-fixtures.ts     # Documentos de prueba generados en memoria
 └── fixtures/                  # Ejemplos cifrados con atribución MIT
 playwright.config.ts
@@ -160,7 +173,7 @@ Se conserva una sola ruta dinámica `/tools/[slug]/`; cada herramienta tiene su 
 | Descarga ZIP          | `jszip` 3.10.2, cargado solo al preparar varios resultados                  |
 | Arrastre de páginas   | `@dnd-kit/core` 6.3.1, `sortable` 10.0.0 y `utilities` 3.2.2                |
 
-Las versiones exactas están registradas en `package-lock.json`. Imágenes a PDF reutiliza `pdf-lib`, `dnd-kit` y las APIs nativas File, Blob, Canvas, ImageBitmap y Web Worker. La fase 5 no añade dependencias. No hay autenticación, bases de datos ni backend.
+Las versiones exactas están registradas en `package-lock.json`. Imágenes a PDF reutiliza `pdf-lib`, `dnd-kit` y las APIs nativas File, Blob, Canvas, ImageBitmap y Web Worker. PDF a imágenes reutiliza `pdfjs-dist`, Canvas, Blob y `jszip`. Las fases 5 y 6 no añaden dependencias. No hay autenticación, bases de datos ni backend.
 
 ## Funcionamiento y privacidad de Unir PDF
 
@@ -197,6 +210,14 @@ El orden y la rotación permanecen como metadatos ligeros. Al generar, los buffe
 
 Los tamaños estándar usan puntos PDF. El modo de tamaño de imagen convierte píxeles CSS mediante la relación coherente de 96 píxeles por pulgada y 72 puntos por pulgada. Cada imagen ocupa una página. Los buffers, bitmaps, canvases, workers y URLs temporales se liberan al terminar, reiniciar o abandonar la herramienta.
 
+## Funcionamiento y privacidad de PDF a imágenes
+
+El archivo se identifica y valida localmente mediante el mismo worker seguro de las herramientas PDF. Una vez aceptado, PDF.js abre una copia en memoria y utiliza su worker incluido en la exportación estática; no descarga motores desde una CDN. Las miniaturas solo se dibujan al acercarse a la zona visible y cada renderizado obsoleto se cancela.
+
+La selección admite clic, toque, teclado, todas, ninguna y rangos como `1-3, 6, 9-12`. Los rangos se normalizan al orden natural y las páginas repetidas se eliminan. La vista previa usa una muestra limitada a 760 píxeles, mientras que el resultado calcula la escala real con `DPI / 72` sobre el área visible de cada página.
+
+La conversión procesa una página a la vez. Cada Canvas se libera después de codificar un Blob y se comprueba que su MIME sea JPG, PNG o WebP según lo solicitado. JPG usa fondo blanco; PNG y WebP permiten fondo blanco, color personalizado o transparencia cuando el PDF no dibuja un fondo opaco. Los resultados conservan su número de página original y `jszip` se carga solo al preparar varias descargas.
+
 ## Limitaciones conocidas
 
 - Los PDF cifrados o protegidos se rechazan; no se solicitan contraseñas ni se elude su protección.
@@ -206,6 +227,8 @@ Los tamaños estándar usan puntos PDF. El modo de tamaño de imagen convierte p
 - Dividir PDF también utiliza una copia temporal para PDF.js. Las miniaturas tienen resolución acotada; la vista sirve para identificar páginas, no para examinar detalles de impresión. El ZIP necesita memoria adicional proporcional a los resultados generados.
 - Organizar PDF conserva un máximo de 50 pasos de historial. Las miniaturas giradas son una representación visual reducida; el PDF final aplica la rotación directamente a cada página.
 - Imágenes muy grandes pueden superar la memoria disponible durante la decodificación o el recorte. JPEG se conserva directamente cuando es posible; girarlo o usar Rellenar requiere recodificación con calidad alta. La orientación EXIF poco habitual puede depender de cómo la interprete el navegador.
+- PDF a imágenes limita cada Canvas a 16 384 píxeles por lado y 40 millones de píxeles. Una exportación extensa a 300 DPI puede usar mucha memoria porque los Blobs terminados se conservan para permitir descargas individuales y ZIP.
+- El navegador puede no codificar WebP; en ese caso la opción se deshabilita y se ofrecen PNG y JPG. El DPI determina las dimensiones de renderizado, pero Canvas no garantiza conservar metadatos físicos de DPI dentro del archivo.
 - Al salir, recargar o reiniciar se pierde la selección y el resultado que no se haya descargado. No existe persistencia de documentos.
 
 ## Validaciones
@@ -222,7 +245,7 @@ Las pruebas utilizan **la exportación real de `out/`** en un servidor estático
 
 - Búsqueda, categorías, enlaces directos, recarga y estado vacío.
 - Navegación de escritorio, teclado y menú móvil.
-- Las 16 páginas y disponibilidad de Unir, Dividir, Organizar e Imágenes a PDF; las otras 12 mantienen la carga deshabilitada.
+- Las 16 páginas y disponibilidad de Unir, Dividir, Organizar, Imágenes a PDF y PDF a imágenes; las otras 11 mantienen la carga deshabilitada.
 - Ausencia de solicitudes de escritura o solicitudes a otros dominios durante el recorrido de las herramientas.
 - Persistencia de tema y preferencia del sistema.
 - Ausencia de desbordamiento horizontal a 320, 390, 768, 1024, 1440 y 1920 px.
@@ -242,8 +265,11 @@ Las pruebas utilizan **la exportación real de `out/`** en un servidor estático
 - Imágenes a PDF: JPG, PNG transparente, WebP, formatos mixtos, adición, eliminación, duplicados, archivos falsos y carga mediante arrastre.
 - Arrastre real de la sexta imagen a la segunda posición, desplazamiento visual, toque entre filas, Escape, teclado, rotación y orden verificado dentro del PDF.
 - A4, Carta, A3, tamaño por imagen, orientación automática y forzada, márgenes, Contener, Rellenar con recorte, descarga renombrada, móvil y conversión sin conexión.
+- PDF a imágenes: selección individual, todas, ninguna y rangos sin duplicados; miniaturas reales, vista previa, JPG, PNG transparente y WebP con comprobación del MIME.
+- Cálculo de 96, 150, 300 y DPI personalizado, páginas verticales y horizontales, calidad, fondo blanco, límites de Canvas, progreso, cancelación, nombres, descargas y ZIP válido.
+- Prueba principal con las páginas 2, 4, 6 y 8 de un PDF de 10 páginas convertidas a JPG de 150 DPI sin solicitudes externas.
 
-Validación de la fase 5: TypeScript, lint, compilación y exportación estática correctas. Las 59 pruebas se ejecutan sobre el sitio exportado e incluyen los cuatro flujos, cancelación y limpieza de recursos.
+Validación de la fase 6: TypeScript, lint, compilación y exportación estática correctas. Las 69 pruebas se ejecutan sobre el sitio exportado e incluyen los cinco flujos, cancelación y limpieza de recursos.
 
 Las capturas de revisión se generan en `test-results/` (ignorado por Git). Las comprobaciones de accesibilidad automatizadas no sustituyen una auditoría manual completa ni pruebas con todos los navegadores.
 
@@ -255,4 +281,4 @@ Se fija una versión corregida de `compression` (>= 1.8.2) mediante `overrides` 
 
 ## Próximas herramientas
 
-Unir, Dividir, Organizar e Imágenes a PDF están habilitadas. Las otras 12 herramientas se implementarán individualmente cuando se acuerde su alcance, incorporando sus motores bajo demanda y verificando su procesamiento local. Las conversiones Word/PowerPoint requieren evaluar fidelidad y compatibilidad antes de anunciar su disponibilidad.
+Unir, Dividir, Organizar, Imágenes a PDF y PDF a imágenes están habilitadas. Las otras 11 herramientas se implementarán individualmente cuando se acuerde su alcance, incorporando sus motores bajo demanda y verificando su procesamiento local. Las conversiones Word/PowerPoint requieren evaluar fidelidad y compatibilidad antes de anunciar su disponibilidad.

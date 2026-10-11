@@ -21,6 +21,8 @@ const messages: Record<PdfErrorCode, string> = {
     "No pudimos organizar este documento. Vuelve a seleccionarlo e inténtalo de nuevo.",
   images:
     "No pudimos crear el PDF con estas imágenes. Prueba con archivos más pequeños o vuelve a seleccionarlos.",
+  render:
+    "No pudimos convertir las páginas en imágenes. Reduce la resolución o prueba con otra copia del PDF.",
   cancelled: "La operación se ha cancelado.",
 };
 
